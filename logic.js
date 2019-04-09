@@ -1,12 +1,30 @@
 
 var queryUrl = "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson";
+var boundaries="PB2002_boundaries.json"
 
+d3.json(queryUrl, function(response) {
+    d3.json(boundaries, function(data) {
 
-d3.json(queryUrl, function(data) {
-  
-  console.log(data);
-  createFeatures(data.features);
+  var earthquakes = L.geoJSON(response.features,{
+    pointToLayer: function (feature, latlng) {
+        return L.circleMarker(latlng, {
+            radius: (feature.properties.mag*3),
+            fillColor:  getColor(feature.properties.mag),
+            color: "#000",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+        });
+    }})
 
+    var boundaryLines = L.geoJSON(data.features, {style: {
+        "color": "#3690c0",
+        "weight": 2,
+        "opacity": 0.6
+    }});
+
+    createMap(earthquakes,boundaryLines);
+})
 });
 
 
@@ -19,26 +37,8 @@ function getColor(d) {
                       '#FEB24C';
 }
 
-function createFeatures(earthquakeData) {
 
-  var earthquakes = L.geoJSON(earthquakeData,{
-    pointToLayer: function (feature, latlng) {
-        return L.circleMarker(latlng, {
-            radius: (feature.properties.mag*3),
-            fillColor:  getColor(feature.properties.mag),
-            color: "#000",
-            weight: 1,
-            opacity: 1,
-            fillOpacity: 0.8
-        });
-    }})
-
-    createMap(earthquakes);
- 
-}
-
-
-function createMap(earthquakes) {
+function createMap(earthquakes,boundaryLines) {
   
     var darkmap = L.tileLayer("https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.png?access_token={accessToken}", {
       attribution: "Map data &copy; <a href=\"https://www.openstreetmap.org/\">OpenStreetMap</a> contributors, <a href=\"https://creativecommons.org/licenses/by-sa/2.0/\">CC-BY-SA</a>, Imagery © <a href=\"https://www.mapbox.com/\">Mapbox</a>",
@@ -68,7 +68,8 @@ function createMap(earthquakes) {
     };
     
     var overlayMaps = {
-      Earthquakes: earthquakes
+      Earthquakes: earthquakes,
+      Boundaries: boundaryLines
     };
   
    
